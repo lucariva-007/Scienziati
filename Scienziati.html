@@ -1,11 +1,284 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="Scienziati.js"> </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STEAM Who?</title>
+  <style>
+    /* Reset & Base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #fafafa;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: #111;
+    }
+    header p {
+      font-size: 0.95rem;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* Card */
+    .card {
+      background: #ffffff;
+      border: 1px solid #484b6a;
+      border-radius: 10px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 1rem;
+    }
+
+    /* Screens */
+    .screen { display: none; width: 100%; max-width: 700px; }
+    .screen.active { display: block; }
+
+    /* Griglia scienziati */
+    .scientist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin: 1rem 0;
+    }
+
+    .scientist-btn {
+      background: #e4e5f1;
+      border: 1px solid #484b6a;
+      border-radius: 8px;
+      padding: 10px 8px;
+      font-size: 13px;
+      color: #1a1a1a;
+      text-align: center;
+      line-height: 1.35;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.2s;
+    }
+
+    .scientist-btn.eliminated {
+      opacity: 0.22;
+      text-decoration: line-through;
+    }
+
+    .scientist-btn.active-candidate {
+      background: #e8f5e9;
+      border-color: #66bb6a;
+      color: #2e7d32;
+      font-weight: 600;
+    }
+
+    /* Progresso */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 0.75rem;
+    }
+
+    .progress-bar {
+      height: 5px;
+      background: #e0ddd6;
+      border-radius: 3px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 5px;
+      background: #1565c0;
+      border-radius: 3px;
+      transition: width 0.35s ease;
+    }
+
+    /* Domanda */
+    .question-card {
+      background: #f6f7f8;
+      border: 1px solid #484b6a;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #111;
+      text-align: center;
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-si, .btn-no {
+      border: none;
+      border-radius: 8px;
+      padding: 12px 40px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-si:hover, .btn-no:hover { opacity: 0.8; transform: scale(0.98); }
+
+    .btn-si { background: #b5ddb9; color: #2e7d32; }
+    .btn-no { background: #fda3b0; color: #c62828; }
+
+    .skip-btn {
+      display: block;
+      margin: 0.75rem auto 0;
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 6px 18px;
+      font-size: 13px;
+      color: #888;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .skip-btn:hover { border-color: #888; color: #333; }
+
+    /* Pulsante principale */
+    .main-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #1565c0;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1.25rem;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .main-btn:hover { background: #0d47a1; transform: scale(0.99); }
+
+    /* Risultato */
+    .result-box {
+      text-align: center;
+      padding: 1rem 0.5rem 1.5rem;
+    }
+    .result-emoji { font-size: 3rem; margin-bottom: 0.75rem; }
+    .result-label { font-size: 14px; color: #888; margin-bottom: 4px; }
+    .result-name  { font-size: 1.6rem; font-weight: 700; color: #111; margin-bottom: 1rem; }
+    .result-sub   { font-size: 14px; color: #888; margin-top: 0.5rem; }
+
+    .badge-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 0.5rem; }
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .badge-blue  { background: #e3f2fd; color: #1565c0; }
+    .badge-green { background: #e8f5e9; color: #2e7d32; }
+
+    /* Lista multipla */
+    .multiple-list {
+      list-style: none;
+      margin: 0.75rem auto 0;
+      max-width: 260px;
+      text-align: left;
+    }
+    .multiple-list li {
+      padding: 7px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #f0ede8;
+      color: #1a1a1a;
+    }
+    .multiple-list li:last-child { border-bottom: none; }
+
+    /* Label candidati rimasti */
+    .grid-label {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+
+    /* Intro testo */
+    .intro-text {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.7;
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
 <body>
-    Ciao
+
+  <header>
+    <h1>STEAM Who?</h1>
+    <p>Pensa ad uno scienziato ... <em>indovinerò chi è</em>!</p>
+  </header>
+
+  <!-- Schermata iniziale -->
+  <div id="screen-start" class="screen active card">
+    <p class="intro-text">
+      Scegli uno fra gli scienziati nella lista riportata qui sotto, poi premi su <strong>Inizia</strong>.
+      Ti farò delle domande a cui rispondere con <strong>Sì</strong> o <strong>No</strong>. In base alle tue risposte
+      cercherò di indovinare chi hai scelto!
+    </p>
+    <div class="scientist-grid" id="start-grid"></div>
+    <button class="main-btn" onclick="startGame()">Inizia</button>
+  </div>
+
+  <!-- Schermata di gioco -->
+  <div id="screen-game" class="screen">
+    <div class="card">
+      <div class="stat-row">
+        <span>Domanda <span id="q-num">1</span> / <span id="q-tot">13</span></span>
+        <span><span id="cand-count">20</span> candidati rimasti</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog-fill" style="width: 0%;"></div>
+      </div>
+      <div class="question-card">
+        <div class="question-text" id="question-text"></div>
+        <div class="btn-row">
+          <button class="btn-si" onclick="answer('Si')">Sì</button>
+          <button class="btn-no" onclick="answer('No')">No</button>
+        </div>
+        <button class="skip-btn" onclick="skipQuestion()">Salta domanda</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="grid-label">Candidati rimasti</p>
+      <div class="scientist-grid" id="game-grid"></div>
+    </div>
+  </div>
+
+  <!-- Schermata risultato -->
+  <div id="screen-result" class="screen card">
+    <div class="result-box" id="result-content"></div>
+    <button class="main-btn" onclick="resetGame()">Gioca ancora</button>
+  </div>
+
+  <script src="Scienziati.js"></script>
 </body>
 </html>
